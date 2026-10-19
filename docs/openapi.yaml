@@ -323,3 +323,94 @@ components:
         updatedAt:
           type: string
           format: date-time
+    OrderStatus:
+      type: string
+      enum: [pendiente, preparando, listo, entregado]
+      description: Flujo `pendiente → preparando → listo → entregado`.
+    OrderItem:
+      type: object
+      description: Cada línea representa una unidad (`quantity` es siempre 1).
+      required: [id, dishId, quantity, notes, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        dishId:
+          type: string
+        quantity:
+          type: integer
+          example: 1
+        notes:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        dishName:
+          type: string
+          description: Solo presente al consultar pedidos.
+        dishPrice:
+          type: number
+          description: Solo presente al consultar pedidos.
+        dishCategory:
+          type: string
+          description: Solo presente al consultar pedidos.
+    Order:
+      type: object
+      required: [id, restaurantId, tableId, clientId, createdAt, items]
+      properties:
+        id:
+          type: string
+          format: uuid
+        restaurantId:
+          type: string
+        tableId:
+          type: string
+          nullable: true
+        clientId:
+          type: string
+          nullable: true
+          description: Id del usuario autenticado que creó el pedido.
+        createdAt:
+          type: string
+          format: date-time
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        restaurantName:
+          type: string
+          description: Solo presente al consultar pedidos.
+        restaurantLogoUrl:
+          type: string
+          nullable: true
+          description: Solo presente al consultar pedidos.
+    CreateOrderRequest:
+      type: object
+      required: [restaurantId, items]
+      properties:
+        restaurantId:
+          type: string
+        tableId:
+          type: string
+          nullable: true
+        items:
+          type: array
+          items:
+            type: object
+            required: [dishId, quantity]
+            properties:
+              dishId:
+                type: string
+              quantity:
+                type: integer
+                minimum: 1
+                description: Se expande en `quantity` líneas de cantidad 1.
+              notes:
+                type: string
+                nullable: true
+    UpdateItemStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: '#/components/schemas/OrderStatus'
