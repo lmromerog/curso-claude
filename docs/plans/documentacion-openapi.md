@@ -38,7 +38,7 @@ Cada tarea dura entre 5 y 10 minutos y contiene un único cambio.
 - [x] **T12** (~5 min) — Validar el YAML con `npx @redocly/cli lint docs/openapi.yaml` y corregir errores — `docs/openapi.yaml`
 - [x] **T13** (~5 min) — Añadir el script `docs:api` (lint + `build-docs` con salida a `docs/openapi.html`) — `packages/api/package.json`
 - [x] **T14** (~5 min) — Ejecutar `npm run docs:api -w @resttek/api` y comprobar que se genera `docs/openapi.html` — `docs/openapi.html`
-- [ ] **T15** (~5 min) — Abrir el HTML y contrastar 3-4 endpoints (uno público, uno con rol, uno de pedidos) con el código real — `docs/openapi.html`
+- [x] **T15** (~5 min) — Abrir el HTML y contrastar 3-4 endpoints (uno público, uno con rol, uno de pedidos) con el código real — `docs/openapi.html`
 - [ ] **T16** (~5 min) — Añadir a `CLAUDE.md` la ubicación de `docs/openapi.yaml`, `docs/openapi.html` y el comando para regenerarlo — `CLAUDE.md`
 
 ## Criterios de aceptación
