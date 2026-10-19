@@ -727,3 +727,134 @@ paths:
                 $ref: '#/components/schemas/Restaurant'
         '404':
           $ref: '#/components/responses/NotFound'
+  /restaurants/{restaurantId}/ingredients:
+    parameters:
+      - name: restaurantId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      tags: [Ingredients]
+      summary: Crear un ingrediente
+      description: 'Roles permitidos: `admin`.'
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngredientCreateRequest'
+      responses:
+        '201':
+          description: Ingrediente creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ingredient'
+        '400':
+          description: Datos inválidos (nombre vacío, unidad no válida, stock negativo).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainError'
+              example:
+                error: InvalidUnitError
+                message: 'Invalid unit: litro. Must be one of: kg, g, l, ml, unidad'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    get:
+      tags: [Ingredients]
+      summary: Listar los ingredientes de un restaurante
+      description: 'Roles permitidos: `admin`, `manager`, `cocinero`.'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de ingredientes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ingredient'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /restaurants/{restaurantId}/ingredients/{id}:
+    parameters:
+      - name: restaurantId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Ingredients]
+      summary: Obtener un ingrediente
+      description: 'Roles permitidos: `admin`, `manager`, `cocinero`.'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Ingrediente encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ingredient'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Ingredients]
+      summary: Actualizar un ingrediente
+      description: 'Roles permitidos: `admin`.'
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngredientUpdateRequest'
+      responses:
+        '200':
+          description: Ingrediente actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ingredient'
+        '400':
+          $ref: '#/components/responses/DomainError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Ingredients]
+      summary: Eliminar un ingrediente
+      description: 'Roles permitidos: `admin`.'
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Ingrediente eliminado.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'

@@ -32,7 +32,7 @@ Cada tarea dura entre 5 y 10 minutos y contiene un único cambio.
 - [x] **T6** (~10 min) — Documentar `/health`, `POST /auth/login` y `POST /auth/register` — `docs/openapi.yaml`
 - [x] **T7** (~10 min) — Documentar `/employees` (POST, GET, GET `/{id}`) y `/restaurants/{restaurantId}/employees` — `docs/openapi.yaml`
 - [x] **T8** (~10 min) — Documentar `/restaurants` (POST, GET, GET `/{id}`, PUT `/{id}`) y `/public/restaurants` (GET, GET `/{id}`) — `docs/openapi.yaml`
-- [ ] **T9** (~10 min) — Documentar los 5 endpoints de `/restaurants/{restaurantId}/ingredients` con roles y errores — `docs/openapi.yaml`
+- [x] **T9** (~10 min) — Documentar los 5 endpoints de `/restaurants/{restaurantId}/ingredients` con roles y errores — `docs/openapi.yaml`
 - [ ] **T10** (~10 min) — Documentar los 5 endpoints de `/restaurants/{restaurantId}/dishes` y `GET /public/restaurants/{restaurantId}/dishes` — `docs/openapi.yaml`
 - [ ] **T11** (~10 min) — Documentar `/orders` (POST, GET `/active`, GET `/mine`, GET `/{id}`, PATCH `/{orderId}/items/{itemId}/status`) — `docs/openapi.yaml`
 - [ ] **T12** (~5 min) — Validar el YAML con `npx @redocly/cli lint docs/openapi.yaml` y corregir errores — `docs/openapi.yaml`
