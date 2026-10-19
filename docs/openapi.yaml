@@ -599,3 +599,131 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+  /restaurants:
+    post:
+      tags: [Restaurants]
+      summary: Crear un restaurante
+      description: 'Roles permitidos: `admin`.'
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestaurantInput'
+      responses:
+        '201':
+          description: Restaurante creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Restaurant'
+        '400':
+          $ref: '#/components/responses/DomainError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    get:
+      tags: [Restaurants]
+      summary: Listar restaurantes
+      description: |
+        Cualquier usuario autenticado. Un `admin` recibe todos los restaurantes; el resto
+        solo el suyo (lista vacía si no tiene `restaurantId`).
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de restaurantes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Restaurant'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /restaurants/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Restaurants]
+      summary: Obtener un restaurante
+      description: Cualquier usuario autenticado.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Restaurante encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Restaurant'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Restaurants]
+      summary: Actualizar un restaurante
+      description: 'Roles permitidos: `admin`.'
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestaurantInput'
+      responses:
+        '200':
+          description: Restaurante actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Restaurant'
+        '400':
+          $ref: '#/components/responses/DomainError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /public/restaurants:
+    get:
+      tags: [Public]
+      summary: Listar todos los restaurantes (sin autenticación)
+      responses:
+        '200':
+          description: Lista de restaurantes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Restaurant'
+  /public/restaurants/{id}:
+    get:
+      tags: [Public]
+      summary: Obtener un restaurante (sin autenticación)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Restaurante encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Restaurant'
+        '404':
+          $ref: '#/components/responses/NotFound'
