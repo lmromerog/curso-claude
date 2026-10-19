@@ -34,7 +34,7 @@ Cada tarea dura entre 5 y 10 minutos y contiene un único cambio.
 - [x] **T8** (~10 min) — Documentar `/restaurants` (POST, GET, GET `/{id}`, PUT `/{id}`) y `/public/restaurants` (GET, GET `/{id}`) — `docs/openapi.yaml`
 - [x] **T9** (~10 min) — Documentar los 5 endpoints de `/restaurants/{restaurantId}/ingredients` con roles y errores — `docs/openapi.yaml`
 - [x] **T10** (~10 min) — Documentar los 5 endpoints de `/restaurants/{restaurantId}/dishes` y `GET /public/restaurants/{restaurantId}/dishes` — `docs/openapi.yaml`
-- [ ] **T11** (~10 min) — Documentar `/orders` (POST, GET `/active`, GET `/mine`, GET `/{id}`, PATCH `/{orderId}/items/{itemId}/status`) — `docs/openapi.yaml`
+- [x] **T11** (~10 min) — Documentar `/orders` (POST, GET `/active`, GET `/mine`, GET `/{id}`, PATCH `/{orderId}/items/{itemId}/status`) — `docs/openapi.yaml`
 - [ ] **T12** (~5 min) — Validar el YAML con `npx @redocly/cli lint docs/openapi.yaml` y corregir errores — `docs/openapi.yaml`
 - [ ] **T13** (~5 min) — Añadir el script `docs:api` (lint + `build-docs` con salida a `docs/openapi.html`) — `packages/api/package.json`
 - [ ] **T14** (~5 min) — Ejecutar `npm run docs:api -w @resttek/api` y comprobar que se genera `docs/openapi.html` — `docs/openapi.html`
