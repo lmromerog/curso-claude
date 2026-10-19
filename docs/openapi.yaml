@@ -418,6 +418,7 @@ paths:
   /health:
     get:
       tags: [Health]
+      security: []
       summary: Comprobar el estado del servicio
       description: Se sirve en `/health`, fuera del prefijo `/api/v1`.
       servers:
@@ -436,6 +437,7 @@ paths:
   /auth/login:
     post:
       tags: [Auth]
+      security: []
       summary: Iniciar sesión
       requestBody:
         required: true
@@ -462,6 +464,7 @@ paths:
   /auth/register:
     post:
       tags: [Auth]
+      security: []
       summary: Registrar un cliente
       description: Crea un usuario con rol `cliente` y devuelve su token.
       requestBody:
@@ -698,6 +701,7 @@ paths:
   /public/restaurants:
     get:
       tags: [Public]
+      security: []
       summary: Listar todos los restaurantes (sin autenticación)
       responses:
         '200':
@@ -711,6 +715,7 @@ paths:
   /public/restaurants/{id}:
     get:
       tags: [Public]
+      security: []
       summary: Obtener un restaurante (sin autenticación)
       parameters:
         - name: id
@@ -992,6 +997,7 @@ paths:
   /public/restaurants/{restaurantId}/dishes:
     get:
       tags: [Public]
+      security: []
       summary: Listar los platos disponibles de un restaurante (sin autenticación)
       description: Devuelve solo los platos con `available = true`.
       parameters:
