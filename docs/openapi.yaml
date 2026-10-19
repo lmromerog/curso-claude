@@ -172,3 +172,154 @@ components:
         restaurantId:
           type: string
           nullable: true
+    RestaurantInput:
+      type: object
+      required: [name, address, email, phone, ownerFirstName, ownerLastName]
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        ownerFirstName:
+          type: string
+        ownerLastName:
+          type: string
+        logoUrl:
+          type: string
+          nullable: true
+    Restaurant:
+      allOf:
+        - $ref: '#/components/schemas/RestaurantInput'
+        - type: object
+          required: [id, logoUrl, createdAt, updatedAt]
+          properties:
+            id:
+              type: string
+              format: uuid
+            logoUrl:
+              type: string
+              nullable: true
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    IngredientUnit:
+      type: string
+      enum: [kg, g, l, ml, unidad]
+    IngredientCreateRequest:
+      type: object
+      required: [name, unit]
+      properties:
+        name:
+          type: string
+        unit:
+          $ref: '#/components/schemas/IngredientUnit'
+        currentStock:
+          type: number
+          minimum: 0
+          default: 0
+    IngredientUpdateRequest:
+      type: object
+      required: [name, unit, currentStock]
+      properties:
+        name:
+          type: string
+        unit:
+          $ref: '#/components/schemas/IngredientUnit'
+        currentStock:
+          type: number
+          minimum: 0
+    Ingredient:
+      type: object
+      required: [id, name, unit, currentStock, restaurantId, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        unit:
+          $ref: '#/components/schemas/IngredientUnit'
+        currentStock:
+          type: number
+        restaurantId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    DishCategory:
+      type: string
+      enum: [entrante, principal, postre, bebida]
+    DishIngredient:
+      type: object
+      required: [ingredientId, quantity]
+      properties:
+        ingredientId:
+          type: string
+        quantity:
+          type: number
+          exclusiveMinimum: true
+          minimum: 0
+    DishRequest:
+      type: object
+      required: [name, price, category]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        price:
+          type: number
+          exclusiveMinimum: true
+          minimum: 0
+          description: Debe ser un número positivo.
+        category:
+          $ref: '#/components/schemas/DishCategory'
+        available:
+          type: boolean
+          description: Por defecto `true` al crear.
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/DishIngredient'
+    Dish:
+      type: object
+      required: [id, name, description, price, category, available, restaurantId, ingredients, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        price:
+          type: number
+        category:
+          $ref: '#/components/schemas/DishCategory'
+        available:
+          type: boolean
+        restaurantId:
+          type: string
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/DishIngredient'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
