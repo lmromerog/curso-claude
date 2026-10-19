@@ -414,3 +414,75 @@ components:
       properties:
         status:
           $ref: '#/components/schemas/OrderStatus'
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Comprobar el estado del servicio
+      description: Se sirve en `/health`, fuera del prefijo `/api/v1`.
+      servers:
+        - url: /
+      responses:
+        '200':
+          description: El servicio está activo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Iniciar sesión
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Credenciales correctas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Email o contraseña incorrectos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainError'
+              example:
+                error: InvalidCredentialsError
+                message: Invalid credentials
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Registrar un cliente
+      description: Crea un usuario con rol `cliente` y devuelve su token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Cliente creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Datos inválidos o email ya registrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainError'
+              example:
+                error: DuplicatedEmailError
+                message: Email is already in use
