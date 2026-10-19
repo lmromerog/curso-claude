@@ -24,7 +24,7 @@ npm run seed                # idempotent (INSERT OR IGNORE); password of every s
 npm run dev:api             # tsx watch src/server.ts; GET /health -> {"status":"ok"}
 npm run dev:admin           # also dev:empleados, dev:clientes (ng serve with proxy /api -> localhost:3000)
 npm test                    # vitest run, API only
-npm run docs:api -w @resttek/api   # lint docs/openapi.yaml and regenerate docs/openapi.html (npx @redocly/cli)
+npm run docs:api -w @resttek/api   # lint docs/openapi.yaml and regenerate docs/openapi.html (npx @redocly/cli; needs network to inline Redoc)
 ```
 
 Single test / watch (frontends have no tests):

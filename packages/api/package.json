@@ -7,7 +7,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "seed": "tsx src/scripts/seed.ts",
-    "docs:api": "npx --yes @redocly/cli lint ../../docs/openapi.yaml && npx --yes @redocly/cli build-docs ../../docs/openapi.yaml -o ../../docs/openapi.html"
+    "docs:api": "npx --yes @redocly/cli lint ../../docs/openapi.yaml && npx --yes @redocly/cli build-docs ../../docs/openapi.yaml -o ../../docs/openapi.html --disableGoogleFont && node ../../scripts/inline-redoc.mjs ../../docs/openapi.html"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

@@ -47,7 +47,7 @@ Cada tarea dura entre 5 y 10 minutos y contiene un único cambio.
 - [x] Los 29 endpoints montados en `app.ts` aparecen en el YAML con el mismo método y ruta (verificable comparando con `grep "router\." src`).
 - [x] Cada endpoint protegido declara `security: bearerAuth` e indica en la descripción los roles permitidos; los públicos no declaran seguridad.
 - [x] Cada endpoint documenta el caso feliz y al menos un caso de error (400/401/403/404) con el esquema de error de la API; p. ej. `POST /auth/login` con credenciales inválidas responde 401 con su mensaje en español, tal como lo devuelve la API. _(Excepción verificada: `/health` y los dos listados públicos no tienen errores de cliente. Los mensajes de error de la API están en inglés y se documentan tal cual.)_
-- [ ] Existe `docs/openapi.html` autocontenido (se abre con doble clic, sin servidor) que muestra todos los endpoints agrupados por tag. _(Pendiente: el HTML está prerrenderizado y se lee sin red, pero carga `redoc.standalone.js` y las fuentes desde CDN.)_
+- [x] Existe `docs/openapi.html` autocontenido (se abre con doble clic, sin servidor) que muestra todos los endpoints agrupados por tag. _(Resuelto: el bundle de Redoc va incrustado con `scripts/inline-redoc.mjs` y se desactivan las fuentes de Google.)_
 - [x] `npm run docs:api -w @resttek/api` regenera el HTML sin pasos manuales.
 - [x] No se modifica código de la API ni se añaden dependencias a `dependencies`/`devDependencies` (la herramienta se invoca con `npx`).
 - [x] `CLAUDE.md` referencia la documentación OpenAPI.
