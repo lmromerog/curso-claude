@@ -1,0 +1,174 @@
+openapi: 3.0.3
+info:
+  title: Resttek API
+  version: 1.0.0
+  description: |
+    API REST de la plataforma de gestión de restaurantes Resttek.
+
+    ## Autenticación
+    Los endpoints protegidos requieren una cabecera `Authorization: Bearer <token>`.
+    El token (JWT, válido 8 horas) se obtiene en `POST /auth/login` o `POST /auth/register`
+    y contiene `{id, role, restaurantId}`.
+
+    ## Roles
+    `admin`, `manager`, `camarero`, `cocinero` y `cliente`. Los clientes son registros de
+    empleados con rol `cliente`.
+
+    ## Errores
+    Los errores de dominio responden `{ "error": "<NombreDelError>", "message": "<detalle>" }`
+    (400 por defecto, 401 para credenciales inválidas, 404 para recursos inexistentes).
+    Los fallos de autenticación/autorización y los endpoints de pedidos responden solo
+    `{ "error": "<detalle>" }`.
+servers:
+  - url: /api/v1
+    description: Servidor de la API (el puerto por defecto es 3000)
+tags:
+  - name: Health
+    description: Estado del servicio
+  - name: Auth
+    description: Inicio de sesión y registro de clientes
+  - name: Employees
+    description: Gestión de empleados (solo admin)
+  - name: Restaurants
+    description: Restaurantes
+  - name: Ingredients
+    description: Ingredientes de un restaurante
+  - name: Dishes
+    description: Platos de un restaurante
+  - name: Orders
+    description: Pedidos y estado de sus líneas
+  - name: Public
+    description: Endpoints sin autenticación para la carta de clientes
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT obtenido en `/auth/login` o `/auth/register`.
+  responses:
+    Unauthorized:
+      description: Token ausente, mal formado o inválido.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SimpleError'
+          example:
+            error: 'Unauthorized: No token provided'
+    Forbidden:
+      description: El rol del usuario no tiene permiso para este endpoint.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SimpleError'
+          example:
+            error: 'Forbidden: Insufficient permissions'
+    DomainError:
+      description: Error de validación o de dominio (400).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DomainError'
+    NotFound:
+      description: El recurso no existe (404).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DomainError'
+  schemas:
+    DomainError:
+      type: object
+      description: Error de dominio gestionado por `errorHandler`.
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          description: Nombre de la clase de error.
+          example: InvalidCredentialsError
+        message:
+          type: string
+          example: Invalid credentials
+    SimpleError:
+      type: object
+      description: Error con un único campo de texto (middlewares de auth y endpoints de pedidos).
+      required: [error]
+      properties:
+        error:
+          type: string
+          example: Internal Server Error
+    Role:
+      type: string
+      enum: [admin, manager, camarero, cocinero, cliente]
+    Employee:
+      type: object
+      required: [id, firstName, lastName, email, role, restaurantId]
+      properties:
+        id:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          $ref: '#/components/schemas/Role'
+        restaurantId:
+          type: string
+          nullable: true
+          description: Restaurante al que pertenece; `null` para admin y clientes.
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: admin@resttek.com
+        password:
+          type: string
+          format: password
+    RegisterRequest:
+      type: object
+      required: [firstName, lastName, email, password]
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+    AuthResponse:
+      type: object
+      required: [token, employee]
+      properties:
+        token:
+          type: string
+          description: JWT válido durante 8 horas.
+        employee:
+          $ref: '#/components/schemas/Employee'
+    CreateEmployeeRequest:
+      type: object
+      required: [firstName, lastName, email, password, role]
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        role:
+          $ref: '#/components/schemas/Role'
+        restaurantId:
+          type: string
+          nullable: true
