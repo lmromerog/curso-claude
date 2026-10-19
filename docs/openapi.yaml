@@ -858,3 +858,154 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+  /restaurants/{restaurantId}/dishes:
+    parameters:
+      - name: restaurantId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      tags: [Dishes]
+      summary: Crear un plato
+      description: 'Roles permitidos: `admin`, `manager`.'
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DishRequest'
+      responses:
+        '201':
+          description: Plato creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dish'
+        '400':
+          description: Datos inválidos (nombre vacío, precio no positivo, categoría no válida).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainError'
+              example:
+                error: InvalidPriceError
+                message: Price must be a positive number
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    get:
+      tags: [Dishes]
+      summary: Listar los platos de un restaurante
+      description: 'Roles permitidos: `admin`, `manager`, `camarero`, `cocinero`.'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de platos (disponibles o no).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Dish'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /restaurants/{restaurantId}/dishes/{id}:
+    parameters:
+      - name: restaurantId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Dishes]
+      summary: Obtener un plato
+      description: 'Roles permitidos: `admin`, `manager`, `camarero`, `cocinero`.'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Plato encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dish'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Dishes]
+      summary: Actualizar un plato
+      description: 'Roles permitidos: `admin`, `manager`.'
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DishRequest'
+      responses:
+        '200':
+          description: Plato actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dish'
+        '400':
+          $ref: '#/components/responses/DomainError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Dishes]
+      summary: Eliminar un plato
+      description: 'Roles permitidos: `admin`, `manager`.'
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Plato eliminado.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /public/restaurants/{restaurantId}/dishes:
+    get:
+      tags: [Public]
+      summary: Listar los platos disponibles de un restaurante (sin autenticación)
+      description: Devuelve solo los platos con `available = true`.
+      parameters:
+        - name: restaurantId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Platos disponibles.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Dish'
