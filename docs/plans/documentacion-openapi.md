@@ -24,7 +24,7 @@ Describir el funcionamiento de la API de Resttek en un documento OpenAPI 3 (`doc
 
 Cada tarea dura entre 5 y 10 minutos y contiene un único cambio.
 
-- [ ] **T1** (~5 min) — Leer los modelos y controllers para anotar cuerpos de petición, respuestas y códigos de error de cada endpoint — `models`, `controllers`, `contexts/employee`
+- [x] **T1** (~5 min) — Leer los modelos y controllers para anotar cuerpos de petición, respuestas y códigos de error de cada endpoint — `models`, `controllers`, `contexts/employee`
 - [ ] **T2** (~10 min) — Crear la cabecera del YAML: `info`, `servers` (`/api/v1`), `tags`, `securitySchemes.bearerAuth` — `docs/openapi.yaml`
 - [ ] **T3** (~10 min) — Definir `components/schemas` de errores (`AppError`) y de empleado/auth (`LoginRequest`, `RegisterRequest`, `Employee`, `CreateEmployeeRequest`, `TokenResponse`) — `docs/openapi.yaml`
 - [ ] **T4** (~10 min) — Definir `components/schemas` de restaurante, ingrediente y plato (entidad + petición create/update, enums `unit` y `category`) — `docs/openapi.yaml`
