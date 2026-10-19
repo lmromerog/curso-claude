@@ -486,3 +486,116 @@ paths:
               example:
                 error: DuplicatedEmailError
                 message: Email is already in use
+  /employees:
+    post:
+      tags: [Employees]
+      summary: Crear un empleado
+      description: 'Roles permitidos: `admin`.'
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEmployeeRequest'
+      responses:
+        '201':
+          description: Empleado creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+        '400':
+          $ref: '#/components/responses/DomainError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    get:
+      tags: [Employees]
+      summary: Listar empleados con paginación
+      description: 'Roles permitidos: `admin`.'
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: role
+          in: query
+          description: Filtra por rol.
+          schema:
+            $ref: '#/components/schemas/Role'
+      responses:
+        '200':
+          description: Lista de empleados.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Employee'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /employees/{id}:
+    get:
+      tags: [Employees]
+      summary: Obtener un empleado
+      description: 'Roles permitidos: `admin`.'
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Empleado encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /restaurants/{restaurantId}/employees:
+    get:
+      tags: [Employees]
+      summary: Listar los empleados de un restaurante
+      description: 'Roles permitidos: `admin`.'
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: restaurantId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Empleados del restaurante.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Employee'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
