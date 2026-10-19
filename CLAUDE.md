@@ -24,6 +24,7 @@ npm run seed                # idempotent (INSERT OR IGNORE); password of every s
 npm run dev:api             # tsx watch src/server.ts; GET /health -> {"status":"ok"}
 npm run dev:admin           # also dev:empleados, dev:clientes (ng serve with proxy /api -> localhost:3000)
 npm test                    # vitest run, API only
+npm run docs:api -w @resttek/api   # lint docs/openapi.yaml and regenerate docs/openapi.html (npx @redocly/cli)
 ```
 
 Single test / watch (frontends have no tests):
@@ -34,6 +35,8 @@ npx vitest run src/services/order.service.test.ts
 npx vitest run -t "test name"
 npm run test:watch
 ```
+
+API docs: `docs/openapi.yaml` (OpenAPI 3.0.3, hand-written, covers all 29 endpoints) is the source of truth; `docs/openapi.html` is generated from it. Update the YAML whenever a route, role or payload changes, then run `docs:api`.
 
 Frontend production build: `npm run build -w @resttek/web-admin` (no lint script exists anywhere). There is no `.env`; only `PORT`, `JWT_SECRET` and `NODE_ENV` are read.
 
