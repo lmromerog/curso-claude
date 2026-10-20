@@ -1,0 +1,459 @@
+openapi: 3.0.3
+info:
+  title: Resttek API - Gestión de mesas
+  version: 1.0.0
+  description: |
+    Contrato de la feature "Gestión de mesas" (issue #5). Complementa `docs/openapi.yaml`.
+
+    Errores de dominio: `{ "error": "<NombreDelError>", "message": "<detalle en español>" }`.
+    Fallos de autenticación/autorización y endpoints de pedidos: `{ "error": "<detalle>" }`.
+servers:
+  - url: /api/v1
+tags:
+  - name: Tables
+    description: Mesas de un restaurante (admin, manager, camarero)
+  - name: Public
+    description: Mesas libres para clientes
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    RestaurantId:
+      name: restaurantId
+      in: path
+      required: true
+      schema:
+        type: string
+    TableId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    Unauthorized:
+      description: Token ausente o inválido.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SimpleError'
+          example:
+            error: 'Unauthorized: No token provided'
+    Forbidden:
+      description: El rol no tiene permiso.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SimpleError'
+          example:
+            error: 'Forbidden: Insufficient permissions'
+    InvalidTable:
+      description: Datos inválidos (número, capacidad o estado).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DomainError'
+          examples:
+            capacity:
+              value:
+                error: InvalidTableCapacityError
+                message: La capacidad debe ser un entero mayor que 0
+            status:
+              value:
+                error: InvalidTableStatusError
+                message: 'Estado de mesa no válido. Valores permitidos: libre, ocupada, reservada'
+    TableNotFound:
+      description: La mesa no existe en el restaurante.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DomainError'
+          example:
+            error: TableNotFoundError
+            message: Mesa no encontrada
+    NumberConflict:
+      description: Ya existe una mesa con ese número en el restaurante.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DomainError'
+          example:
+            error: TableNumberAlreadyExistsError
+            message: Ya existe una mesa con ese número en el restaurante
+  schemas:
+    DomainError:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+    SimpleError:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+    TableStatus:
+      type: string
+      enum: [libre, ocupada, reservada]
+    Table:
+      type: object
+      required: [id, number, description, capacity, status, restaurantId, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        number:
+          type: integer
+          minimum: 1
+          description: Número de mesa, único por restaurante.
+        description:
+          type: string
+          description: Texto libre (p. ej. "Terraza"). Cadena vacía si no hay.
+        capacity:
+          type: integer
+          minimum: 1
+        status:
+          $ref: '#/components/schemas/TableStatus'
+        restaurantId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CreateTableRequest:
+      type: object
+      required: [number, capacity]
+      properties:
+        number:
+          type: integer
+          minimum: 1
+        description:
+          type: string
+          default: ''
+        capacity:
+          type: integer
+          minimum: 1
+      description: La mesa se crea siempre en estado `libre`.
+    UpdateTableRequest:
+      type: object
+      required: [number, capacity]
+      properties:
+        number:
+          type: integer
+          minimum: 1
+        description:
+          type: string
+        capacity:
+          type: integer
+          minimum: 1
+      description: No modifica el estado (usar `PATCH /{id}/status`).
+    UpdateTableStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: '#/components/schemas/TableStatus'
+    OrderTableFields:
+      type: object
+      description: |
+        Campos que se añaden al esquema `Order` de `docs/openapi.yaml`
+        (en `/orders/active`, `/orders/mine` y `/orders/{id}`).
+      properties:
+        tableId:
+          type: string
+          nullable: true
+        tableNumber:
+          type: integer
+          nullable: true
+          description: Número de la mesa (JOIN con `restaurant_tables`); null si el pedido no tiene mesa.
+paths:
+  /restaurants/{restaurantId}/tables:
+    parameters:
+      - $ref: '#/components/parameters/RestaurantId'
+    get:
+      tags: [Tables]
+      summary: Listar las mesas del restaurante
+      description: Roles `admin`, `manager`, `camarero`, `cocinero`. Ordenadas por `number` ascendente, todos los estados.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/TableStatus'
+      responses:
+        '200':
+          description: Lista de mesas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Table'
+        '400':
+          $ref: '#/components/responses/InvalidTable'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Tables]
+      summary: Crear una mesa
+      description: Roles `admin`, `manager`. Se crea en estado `libre`.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTableRequest'
+      responses:
+        '201':
+          description: Mesa creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+        '400':
+          $ref: '#/components/responses/InvalidTable'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/NumberConflict'
+  /restaurants/{restaurantId}/tables/{id}:
+    parameters:
+      - $ref: '#/components/parameters/RestaurantId'
+      - $ref: '#/components/parameters/TableId'
+    get:
+      tags: [Tables]
+      summary: Obtener una mesa
+      description: Roles `admin`, `manager`, `camarero`.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: La mesa.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/TableNotFound'
+    put:
+      tags: [Tables]
+      summary: Editar una mesa
+      description: Roles `admin`, `manager`. No cambia el estado.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTableRequest'
+      responses:
+        '200':
+          description: Mesa actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+        '400':
+          $ref: '#/components/responses/InvalidTable'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/TableNotFound'
+        '409':
+          $ref: '#/components/responses/NumberConflict'
+    delete:
+      tags: [Tables]
+      summary: Eliminar una mesa
+      description: Roles `admin`, `manager`. No se puede borrar una mesa `ocupada`.
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Mesa eliminada.
+        '409':
+          description: La mesa está ocupada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainError'
+              example:
+                error: TableInUseError
+                message: No se puede eliminar una mesa ocupada
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/TableNotFound'
+  /restaurants/{restaurantId}/tables/{id}/status:
+    parameters:
+      - $ref: '#/components/parameters/RestaurantId'
+      - $ref: '#/components/parameters/TableId'
+    patch:
+      tags: [Tables]
+      summary: Cambiar el estado de una mesa
+      description: Roles `admin`, `manager`, `camarero`. Cualquier transición entre `libre`, `ocupada` y `reservada`.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTableStatusRequest'
+      responses:
+        '200':
+          description: Mesa actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+        '400':
+          $ref: '#/components/responses/InvalidTable'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/TableNotFound'
+  /restaurants/{restaurantId}/tables/{id}/occupy:
+    parameters:
+      - $ref: '#/components/parameters/RestaurantId'
+      - $ref: '#/components/parameters/TableId'
+    post:
+      tags: [Tables]
+      summary: Ocupar una mesa libre (cliente)
+      description: |
+        Rol `cliente`. Operación atómica (`UPDATE ... WHERE status = 'libre'`): si dos
+        peticiones compiten, una gana y la otra recibe 409. Sin cuerpo.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Mesa ocupada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/TableNotFound'
+        '409':
+          description: La mesa no está libre o la ocupó otra petición antes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainError'
+              example:
+                error: TableNotAvailableError
+                message: La mesa ya no está disponible
+  /public/restaurants/{restaurantId}/tables:
+    get:
+      tags: [Public]
+      security: []
+      summary: Listar las mesas libres para un número de comensales
+      description: |
+        Sin autenticación. Solo mesas `libre` con `capacity >= people`, ordenadas por
+        `capacity` y `number` ascendentes. Sin `people` devuelve todas las libres.
+        Un restaurante inexistente devuelve una lista vacía.
+      parameters:
+        - $ref: '#/components/parameters/RestaurantId'
+        - name: people
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Mesas libres válidas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Table'
+        '400':
+          description: '`people` no es un entero mayor que 0.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainError'
+              example:
+                error: InvalidTableCapacityError
+                message: El número de personas debe ser un entero mayor que 0
+  /orders:
+    post:
+      tags: [Tables]
+      summary: Crear un pedido con mesa (extensión de POST /orders)
+      description: |
+        Extiende `POST /orders` de `docs/openapi.yaml`. Si llega `tableId` debe existir en
+        el restaurante del pedido y estar `ocupada`; si no, 400 con `{ "error": "<detalle>" }`
+        (formato SimpleError de pedidos). La respuesta y `GET /orders/active`, `/orders/mine`
+        y `/orders/{id}` incluyen `tableNumber` (ver `OrderTableFields`).
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [restaurantId, items]
+              properties:
+                restaurantId:
+                  type: string
+                tableId:
+                  type: string
+                  nullable: true
+                items:
+                  type: array
+                  description: Igual que en `docs/openapi.yaml`.
+                  items:
+                    type: object
+      responses:
+        '201':
+          description: Pedido creado (esquema `Order` completo + `OrderTableFields`).
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: 'openapi.yaml#/components/schemas/Order'
+                  - $ref: '#/components/schemas/OrderTableFields'
+        '400':
+          description: Mesa inexistente, de otro restaurante o no ocupada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+              example:
+                error: La mesa no está ocupada
+        '401':
+          $ref: '#/components/responses/Unauthorized'
