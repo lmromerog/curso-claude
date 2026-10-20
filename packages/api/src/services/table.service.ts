@@ -51,8 +51,8 @@ export class TableService {
         return table
     }
 
-    async update(id: string, dto: UpdateTableDTO): Promise<Table> {
-        const existing = await this.findById(id)
+    async update(restaurantId: string, id: string, dto: UpdateTableDTO): Promise<Table> {
+        const existing = await this.findById(restaurantId, id)
         this.validate(dto.number, dto.capacity)
         await this.ensureNumberIsFree(existing.restaurantId, dto.number, existing.id)
 
@@ -68,17 +68,17 @@ export class TableService {
         return updated
     }
 
-    async delete(id: string): Promise<void> {
-        const existing = await this.findById(id)
+    async delete(restaurantId: string, id: string): Promise<void> {
+        const existing = await this.findById(restaurantId, id)
         if (existing.status === 'ocupada') {
             throw new TableInUseError()
         }
         await this.tableRepository.delete(id)
     }
 
-    async findById(id: string): Promise<Table> {
+    async findById(restaurantId: string, id: string): Promise<Table> {
         const table = await this.tableRepository.findById(id)
-        if (!table) {
+        if (!table || table.restaurantId !== restaurantId) {
             throw new TableNotFoundError()
         }
         return table
@@ -91,9 +91,9 @@ export class TableService {
         )
     }
 
-    async updateStatus(id: string, status: string): Promise<Table> {
+    async updateStatus(restaurantId: string, id: string, status: string): Promise<Table> {
         const normalizedStatus = normalizeTableStatus(status)
-        const existing = await this.findById(id)
+        const existing = await this.findById(restaurantId, id)
 
         const updated: Table = { ...existing, status: normalizedStatus, updatedAt: new Date().toISOString() }
         await this.tableRepository.save(updated)
@@ -108,16 +108,13 @@ export class TableService {
     }
 
     async occupy(restaurantId: string, id: string): Promise<Table> {
-        const existing = await this.tableRepository.findById(id)
-        if (!existing || existing.restaurantId !== restaurantId) {
-            throw new TableNotFoundError()
-        }
+        await this.findById(restaurantId, id)
 
         const occupied = await this.tableRepository.occupyIfFree(id, new Date().toISOString())
         if (!occupied) {
             throw new TableNotAvailableError()
         }
-        return this.findById(id)
+        return this.findById(restaurantId, id)
     }
 
     private validate(number: number, capacity: number): void {

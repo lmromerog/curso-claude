@@ -60,46 +60,46 @@ describe('TableService', () => {
     describe('update', () => {
         it('should update number, description and capacity without changing the status', async () => {
             const created = await service.create(validInput)
-            await service.updateStatus(created.id, 'reservada')
+            await service.updateStatus('r1', created.id, 'reservada')
 
-            const updated = await service.update(created.id, { number: 5, description: 'Barra', capacity: 6 })
+            const updated = await service.update('r1', created.id, { number: 5, description: 'Barra', capacity: 6 })
 
             expect(updated).toEqual(expect.objectContaining({ number: 5, description: 'Barra', capacity: 6, status: 'reservada' }))
         })
 
         it('should throw TableNotFoundError when the table does not exist', async () => {
-            await expect(service.update('nope', { number: 1, description: '', capacity: 2 })).rejects.toThrow(TableNotFoundError)
+            await expect(service.update('r1', 'nope', { number: 1, description: '', capacity: 2 })).rejects.toThrow(TableNotFoundError)
         })
 
         it('should reject an invalid capacity', async () => {
             const created = await service.create(validInput)
-            await expect(service.update(created.id, { number: 1, description: '', capacity: 0 })).rejects.toThrow(InvalidTableCapacityError)
+            await expect(service.update('r1', created.id, { number: 1, description: '', capacity: 0 })).rejects.toThrow(InvalidTableCapacityError)
         })
 
         it('should reject a number used by another table but allow keeping its own', async () => {
             const a = await service.create(validInput)
             await service.create({ ...validInput, number: 2 })
 
-            await expect(service.update(a.id, { number: 2, description: '', capacity: 4 })).rejects.toThrow(TableNumberAlreadyExistsError)
-            await expect(service.update(a.id, { number: 1, description: 'x', capacity: 4 })).resolves.toBeDefined()
+            await expect(service.update('r1', a.id, { number: 2, description: '', capacity: 4 })).rejects.toThrow(TableNumberAlreadyExistsError)
+            await expect(service.update('r1', a.id, { number: 1, description: 'x', capacity: 4 })).resolves.toBeDefined()
         })
     })
 
     describe('delete', () => {
         it('should delete a free table', async () => {
             const created = await service.create(validInput)
-            await service.delete(created.id)
+            await service.delete('r1', created.id)
             expect(await repo.findById(created.id)).toBeNull()
         })
 
         it('should throw TableNotFoundError when the table does not exist', async () => {
-            await expect(service.delete('nope')).rejects.toThrow(TableNotFoundError)
+            await expect(service.delete('r1', 'nope')).rejects.toThrow(TableNotFoundError)
         })
 
         it('should throw TableInUseError when the table is occupied', async () => {
             const created = await service.create(validInput)
-            await service.updateStatus(created.id, 'ocupada')
-            await expect(service.delete(created.id)).rejects.toThrow(TableInUseError)
+            await service.updateStatus('r1', created.id, 'ocupada')
+            await expect(service.delete('r1', created.id)).rejects.toThrow(TableInUseError)
         })
     })
 
@@ -116,35 +116,45 @@ describe('TableService', () => {
         it('should filter by status and reject an invalid one', async () => {
             const t = await service.create(validInput)
             await service.create({ ...validInput, number: 2 })
-            await service.updateStatus(t.id, 'ocupada')
+            await service.updateStatus('r1', t.id, 'ocupada')
 
             expect((await service.findByRestaurantId('r1', 'ocupada')).map(x => x.id)).toEqual([t.id])
             await expect(service.findByRestaurantId('r1', 'rota')).rejects.toThrow(InvalidTableStatusError)
         })
     })
 
+    describe('restaurant ownership', () => {
+        it('should throw TableNotFoundError when the table belongs to another restaurant', async () => {
+            const t = await service.create(validInput)
+            await expect(service.findById('r2', t.id)).rejects.toThrow(TableNotFoundError)
+            await expect(service.update('r2', t.id, { number: 1, description: '', capacity: 2 })).rejects.toThrow(TableNotFoundError)
+            await expect(service.updateStatus('r2', t.id, 'ocupada')).rejects.toThrow(TableNotFoundError)
+            await expect(service.delete('r2', t.id)).rejects.toThrow(TableNotFoundError)
+        })
+    })
+
     describe('findById', () => {
         it('should return the table or throw TableNotFoundError', async () => {
             const created = await service.create(validInput)
-            expect((await service.findById(created.id)).id).toBe(created.id)
-            await expect(service.findById('nope')).rejects.toThrow(TableNotFoundError)
+            expect((await service.findById('r1', created.id)).id).toBe(created.id)
+            await expect(service.findById('r1', 'nope')).rejects.toThrow(TableNotFoundError)
         })
     })
 
     describe('updateStatus', () => {
         it('should change the status from any state to any other', async () => {
             const t = await service.create(validInput)
-            expect((await service.updateStatus(t.id, 'ocupada')).status).toBe('ocupada')
-            expect((await service.updateStatus(t.id, 'libre')).status).toBe('libre')
+            expect((await service.updateStatus('r1', t.id, 'ocupada')).status).toBe('ocupada')
+            expect((await service.updateStatus('r1', t.id, 'libre')).status).toBe('libre')
         })
 
         it('should reject an invalid status', async () => {
             const t = await service.create(validInput)
-            await expect(service.updateStatus(t.id, 'rota')).rejects.toThrow(InvalidTableStatusError)
+            await expect(service.updateStatus('r1', t.id, 'rota')).rejects.toThrow(InvalidTableStatusError)
         })
 
         it('should throw TableNotFoundError when the table does not exist', async () => {
-            await expect(service.updateStatus('nope', 'libre')).rejects.toThrow(TableNotFoundError)
+            await expect(service.updateStatus('r1', 'nope', 'libre')).rejects.toThrow(TableNotFoundError)
         })
     })
 
@@ -153,7 +163,7 @@ describe('TableService', () => {
             const small = await service.create({ ...validInput, number: 1, capacity: 2 })
             await service.create({ ...validInput, number: 2, capacity: 4 })
             const busy = await service.create({ ...validInput, number: 3, capacity: 6 })
-            await service.updateStatus(busy.id, 'ocupada')
+            await service.updateStatus('r1', busy.id, 'ocupada')
 
             const result = await service.listAvailable('r1', 3)
 
@@ -187,7 +197,7 @@ describe('TableService', () => {
 
         it('should throw TableNotAvailableError when the table is not free', async () => {
             const t = await service.create(validInput)
-            await service.updateStatus(t.id, 'reservada')
+            await service.updateStatus('r1', t.id, 'reservada')
             await expect(service.occupy('r1', t.id)).rejects.toThrow(TableNotAvailableError)
         })
 
