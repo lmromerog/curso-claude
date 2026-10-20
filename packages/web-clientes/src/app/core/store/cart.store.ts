@@ -1,4 +1,5 @@
 import { Injectable, signal, computed } from '@angular/core'
+import { Table } from '../models/table.model'
 
 export interface Dish {
   id: string
@@ -21,9 +22,11 @@ export interface CartItem {
 export class CartStore {
   private readonly _items = signal<CartItem[]>([])
   private readonly _restaurantId = signal<string | null>(null)
+  private readonly _table = signal<Table | null>(null)
 
   readonly items = this._items.asReadonly()
   readonly restaurantId = this._restaurantId.asReadonly()
+  readonly table = this._table.asReadonly()
 
   readonly total = computed(() =>
     this._items().reduce((sum, item) => sum + item.dish.price * item.quantity, 0)
@@ -33,9 +36,18 @@ export class CartStore {
     this._items().reduce((count, item) => count + item.quantity, 0)
   )
 
+  setTable(table: Table): void {
+    if (this._restaurantId() && this._restaurantId() !== table.restaurantId) {
+      this._items.set([])
+    }
+    this._restaurantId.set(table.restaurantId)
+    this._table.set(table)
+  }
+
   addItem(dish: Dish, quantity: number = 1, notes: string = ''): void {
     if (this._restaurantId() && this._restaurantId() !== dish.restaurantId) {
       this._items.set([])
+      this._table.set(null)
     }
     this._restaurantId.set(dish.restaurantId)
 
@@ -58,7 +70,7 @@ export class CartStore {
   removeItem(dishId: string): void {
     const items = this._items().filter(item => item.dish.id !== dishId)
     this._items.set(items)
-    if (items.length === 0) {
+    if (items.length === 0 && !this._table()) {
       this._restaurantId.set(null)
     }
   }
@@ -76,6 +88,7 @@ export class CartStore {
 
   clear(): void {
     this._items.set([])
+    this._table.set(null)
     this._restaurantId.set(null)
   }
 }

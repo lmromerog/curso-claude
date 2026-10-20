@@ -36,7 +36,7 @@ npx vitest run -t "test name"
 npm run test:watch
 ```
 
-API docs: `docs/openapi.yaml` (OpenAPI 3.0.3, hand-written, covers all 29 endpoints) is the source of truth; `docs/openapi.html` is generated from it. Update the YAML whenever a route, role or payload changes, then run `docs:api`.
+API docs: `docs/openapi.yaml` (OpenAPI 3.0.3, hand-written, covers all 29 endpoints) is the source of truth, and the table-management endpoints live in the separate `docs/gestion-mesas.openapi.yaml` (linked from the former); `docs/openapi.html` is generated from it. Update the YAML whenever a route, role or payload changes, then run `docs:api`.
 
 Frontend production build: `npm run build -w @resttek/web-admin` (no lint script exists anywhere). There is no `.env`; only `PORT`, `JWT_SECRET` and `NODE_ENV` are read.
 
@@ -56,10 +56,11 @@ Path aliases (tsconfig + `vite-tsconfig-paths` for vitest): `@config`, `@errors`
 Things that are easy to get wrong:
 
 - **Clients are rows in `employees`** with role `cliente`. Roles: `admin`, `manager`, `camarero`, `cocinero`, `cliente`. JWT payload is `{id, role, restaurantId}` (8h).
+- **Restaurant tables** (`restaurant_tables`, layered: `table.routes` / `table.public.routes` → `TableController` → `TableService` → `SqliteTableRepository`): `number` is unique per restaurant, `status` is `libre | ocupada | reservada` (`normalizeTableStatus`). Routes under `/restaurants/:restaurantId/tables`: list (admin, manager, camarero, cocinero), get/status (admin, manager, camarero), create/update/delete (admin, manager; deleting an `ocupada` table gives 409), and `POST /:id/occupy` (role `cliente`, atomic `occupyIfFree`: `UPDATE ... WHERE status = 'libre'`, 409 if taken). `GET /public/restaurants/:restaurantId/tables?people=N` is unauthenticated and returns only free tables with `capacity >= N`. Every by-id operation checks the table belongs to the restaurant of the path (404 otherwise). `OrderService.create` requires `tableId`, if sent, to exist in the restaurant and be `ocupada`; orders expose `tableNumber` (LEFT JOIN). Tables are never released automatically: an employee frees them with `PATCH /:id/status`.
 - **Order items**: each `order_items` row has quantity 1; `OrderService.create` expands a requested `quantity` into N rows. Status flow: `pendiente → preparando → listo → entregado`. An order is "active" until all items are delivered.
 - **DB**: SQLite file `packages/api/resttek.db`, or `:memory:` when `NODE_ENV=test`. Tables are created on startup via `CREATE TABLE IF NOT EXISTS`; there are no migrations, so schema changes need manual handling of the existing `.db` file. `PRAGMA foreign_keys = ON`.
 - **Auth**: `authenticate` (Bearer JWT) and `authorize(roles)` middlewares. Order endpoints only require authentication (no role/restaurant checks), and `OrderController` has its own try/catch instead of using `errorHandler`. These are known gaps listed in `docs/revisiones/`.
-- **Tests** (Vitest, `globals: true`) are unit tests colocated with sources, using in-memory SQLite and hand-written doubles in `repositories/mocks/` and `application/mocks/`. `supertest` is installed but there are no HTTP integration tests.
+- **Tests** (Vitest, `globals: true`) are unit tests colocated with sources, using in-memory SQLite and hand-written doubles in `repositories/mocks/` and `application/mocks/`. `supertest` is used only for the table routes (`routes/table.routes.test.ts`, `routes/order.table.routes.test.ts`), which run the real app against in-memory SQLite.
 
 ## Frontend architecture
 
