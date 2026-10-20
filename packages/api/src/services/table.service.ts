@@ -7,6 +7,7 @@ import {
     InvalidTableNumberError,
     RestaurantIdRequiredError,
     TableInUseError,
+    TableNotAvailableError,
     TableNotFoundError,
     TableNumberAlreadyExistsError
 } from '@errors/DomainErrors.js'
@@ -97,6 +98,26 @@ export class TableService {
         const updated: Table = { ...existing, status: normalizedStatus, updatedAt: new Date().toISOString() }
         await this.tableRepository.save(updated)
         return updated
+    }
+
+    async listAvailable(restaurantId: string, people?: number): Promise<Table[]> {
+        if (people !== undefined && (!Number.isInteger(people) || people < 1)) {
+            throw new InvalidTableCapacityError('El número de personas debe ser un entero mayor que 0')
+        }
+        return this.tableRepository.findAvailable(restaurantId, people)
+    }
+
+    async occupy(restaurantId: string, id: string): Promise<Table> {
+        const existing = await this.tableRepository.findById(id)
+        if (!existing || existing.restaurantId !== restaurantId) {
+            throw new TableNotFoundError()
+        }
+
+        const occupied = await this.tableRepository.occupyIfFree(id, new Date().toISOString())
+        if (!occupied) {
+            throw new TableNotAvailableError()
+        }
+        return this.findById(id)
     }
 
     private validate(number: number, capacity: number): void {

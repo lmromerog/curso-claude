@@ -7,6 +7,7 @@ import {
     InvalidTableNumberError,
     InvalidTableStatusError,
     TableNumberAlreadyExistsError,
+    TableNotAvailableError,
     TableInUseError
 } from '@errors/DomainErrors.js'
 
@@ -144,6 +145,57 @@ describe('TableService', () => {
 
         it('should throw TableNotFoundError when the table does not exist', async () => {
             await expect(service.updateStatus('nope', 'libre')).rejects.toThrow(TableNotFoundError)
+        })
+    })
+
+    describe('listAvailable', () => {
+        it('should return only free tables with enough capacity', async () => {
+            const small = await service.create({ ...validInput, number: 1, capacity: 2 })
+            await service.create({ ...validInput, number: 2, capacity: 4 })
+            const busy = await service.create({ ...validInput, number: 3, capacity: 6 })
+            await service.updateStatus(busy.id, 'ocupada')
+
+            const result = await service.listAvailable('r1', 3)
+
+            expect(result.map(t => t.number)).toEqual([2])
+            expect(result.map(t => t.id)).not.toContain(small.id)
+        })
+
+        it('should return every free table when people is undefined', async () => {
+            await service.create(validInput)
+            expect(await service.listAvailable('r1')).toHaveLength(1)
+        })
+
+        it.each([0, -1, 2.5, NaN])('should reject people=%s with a Spanish message', async (people) => {
+            await expect(service.listAvailable('r1', people))
+                .rejects.toThrow('El número de personas debe ser un entero mayor que 0')
+        })
+    })
+
+    describe('occupy', () => {
+        it('should occupy a free table of the restaurant', async () => {
+            const t = await service.create(validInput)
+            const result = await service.occupy('r1', t.id)
+            expect(result.status).toBe('ocupada')
+        })
+
+        it('should throw TableNotFoundError for a missing table or one of another restaurant', async () => {
+            const t = await service.create(validInput)
+            await expect(service.occupy('r1', 'nope')).rejects.toThrow(TableNotFoundError)
+            await expect(service.occupy('r2', t.id)).rejects.toThrow(TableNotFoundError)
+        })
+
+        it('should throw TableNotAvailableError when the table is not free', async () => {
+            const t = await service.create(validInput)
+            await service.updateStatus(t.id, 'reservada')
+            await expect(service.occupy('r1', t.id)).rejects.toThrow(TableNotAvailableError)
+        })
+
+        it('should let only one of two concurrent requests win', async () => {
+            const t = await service.create(validInput)
+            const results = await Promise.allSettled([service.occupy('r1', t.id), service.occupy('r1', t.id)])
+            expect(results.filter(r => r.status === 'fulfilled')).toHaveLength(1)
+            expect(results.filter(r => r.status === 'rejected')).toHaveLength(1)
         })
     })
 })
