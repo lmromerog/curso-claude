@@ -19,6 +19,11 @@ info:
     (400 por defecto, 401 para credenciales inválidas, 404 para recursos inexistentes).
     Los fallos de autenticación/autorización y los endpoints de pedidos responden solo
     `{ "error": "<detalle>" }`.
+
+    ## Gestión de mesas
+    Los endpoints de mesas (CRUD, cambio de estado, ocupación y listado público de mesas
+    libres) y el campo `tableNumber` de los pedidos se documentan en
+    [`gestion-mesas.openapi.yaml`](gestion-mesas.openapi.yaml).
 servers:
   - url: /api/v1
     description: Servidor de la API (el puerto por defecto es 3000)
