@@ -86,6 +86,26 @@ describe('SqliteTableRepository (Integration)', () => {
         expect(noFilter.map(t => t.id)).toEqual(['t4', 't2', 't5'])
     })
 
+    it('should occupy a free table only once even with concurrent requests', async () => {
+        await repo.save(buildTable({ id: 't6', number: 6, status: 'libre' }))
+
+        const results = await Promise.all([
+            repo.occupyIfFree('t6', new Date().toISOString()),
+            repo.occupyIfFree('t6', new Date().toISOString()),
+            repo.occupyIfFree('t6', new Date().toISOString())
+        ])
+
+        expect(results.filter(Boolean)).toHaveLength(1)
+        expect((await repo.findById('t6'))?.status).toBe('ocupada')
+    })
+
+    it('should not occupy a table that is not free', async () => {
+        await repo.save(buildTable({ id: 't7', number: 7, status: 'reservada' }))
+
+        expect(await repo.occupyIfFree('t7', new Date().toISOString())).toBe(false)
+        expect((await repo.findById('t7'))?.status).toBe('reservada')
+    })
+
     it('should delete a table', async () => {
         await repo.delete('t5')
         expect(await repo.findById('t5')).toBeNull()
