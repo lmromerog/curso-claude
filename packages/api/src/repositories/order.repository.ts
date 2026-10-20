@@ -6,6 +6,7 @@ interface OrderRow {
     id: string
     restaurant_id: string
     table_id: string | null
+    table_number: number | null
     client_id: string | null
     created_at: string
 }
@@ -57,9 +58,10 @@ export class SqliteOrderRepository implements OrderRepository {
 
     async findById(id: string): Promise<Order | null> {
         const orderRow = await this.db.get<OrderRowWithRestaurant>(
-            `SELECT o.*, r.name as restaurant_name, r.logo_url as restaurant_logo_url
+            `SELECT o.*, r.name as restaurant_name, r.logo_url as restaurant_logo_url, rt.number as table_number
              FROM orders o
              LEFT JOIN restaurants r ON o.restaurant_id = r.id
+             LEFT JOIN restaurant_tables rt ON o.table_id = rt.id
              WHERE o.id = ?`,
             [id]
         )
@@ -71,6 +73,7 @@ export class SqliteOrderRepository implements OrderRepository {
             id: orderRow.id,
             restaurantId: orderRow.restaurant_id,
             tableId: orderRow.table_id,
+            tableNumber: orderRow.table_number,
             clientId: orderRow.client_id,
             createdAt: new Date(orderRow.created_at),
             items,
@@ -88,8 +91,9 @@ export class SqliteOrderRepository implements OrderRepository {
 
     async findActiveByRestaurant(restaurantId: string): Promise<Order[]> {
         const query = `
-            SELECT DISTINCT o.*
+            SELECT DISTINCT o.*, rt.number as table_number
             FROM orders o
+            LEFT JOIN restaurant_tables rt ON o.table_id = rt.id
             JOIN order_items oi ON o.id = oi.order_id
             WHERE o.restaurant_id = ? AND oi.status != 'entregado'
             ORDER BY o.created_at ASC
@@ -103,6 +107,7 @@ export class SqliteOrderRepository implements OrderRepository {
                 id: row.id,
                 restaurantId: row.restaurant_id,
                 tableId: row.table_id,
+                tableNumber: row.table_number,
                 clientId: row.client_id,
                 createdAt: new Date(row.created_at),
                 items
@@ -114,9 +119,10 @@ export class SqliteOrderRepository implements OrderRepository {
 
     async findByClientId(clientId: string): Promise<Order[]> {
         const orderRows = await this.db.all<OrderRowWithRestaurant>(
-            `SELECT o.*, r.name as restaurant_name, r.logo_url as restaurant_logo_url
+            `SELECT o.*, r.name as restaurant_name, r.logo_url as restaurant_logo_url, rt.number as table_number
              FROM orders o
              LEFT JOIN restaurants r ON o.restaurant_id = r.id
+             LEFT JOIN restaurant_tables rt ON o.table_id = rt.id
              WHERE o.client_id = ?
              ORDER BY o.created_at DESC`,
             [clientId]
@@ -129,6 +135,7 @@ export class SqliteOrderRepository implements OrderRepository {
                 id: row.id,
                 restaurantId: row.restaurant_id,
                 tableId: row.table_id,
+                tableNumber: row.table_number,
                 clientId: row.client_id,
                 createdAt: new Date(row.created_at),
                 items,

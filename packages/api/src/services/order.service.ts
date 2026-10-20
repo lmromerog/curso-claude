@@ -27,6 +27,7 @@ export class OrderService {
             throw new RestaurantIdRequiredError()
         }
 
+        let tableNumber: number | null = null
         if (request.tableId) {
             const table = await this.tableRepository.findById(request.tableId)
             if (!table || table.restaurantId !== request.restaurantId) {
@@ -35,6 +36,7 @@ export class OrderService {
             if (table.status !== 'ocupada') {
                 throw new TableNotOccupiedError()
             }
+            tableNumber = table.number
         }
 
         const items: OrderItem[] = []
@@ -54,6 +56,7 @@ export class OrderService {
             id: randomUUID(),
             restaurantId: request.restaurantId,
             tableId: request.tableId,
+            tableNumber,
             clientId: request.clientId,
             createdAt: new Date(),
             items
