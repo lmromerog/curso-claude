@@ -1,9 +1,10 @@
 import { Component, inject, OnInit, signal } from '@angular/core'
-import { ActivatedRoute, RouterLink } from '@angular/router'
+import { ActivatedRoute, Router, RouterLink } from '@angular/router'
 import { FormsModule } from '@angular/forms'
 import { RestaurantService } from '../../core/services/restaurant.service'
 import { TableService } from '../../core/services/table.service'
 import { Restaurant } from '../../core/models/restaurant.model'
+import { CartStore } from '../../core/store/cart.store'
 import { Table } from '../../core/models/table.model'
 
 @Component({
@@ -50,6 +51,14 @@ import { Table } from '../../core/models/table.model'
               </button>
             }
           </div>
+          <button type="button" class="btn btn-primary continue-btn" [disabled]="!selected() || occupying()"
+                  (click)="continue()">
+            @if (occupying()) {
+              Reservando mesa...
+            } @else {
+              Continuar a la carta
+            }
+          </button>
         }
       }
     </div>
@@ -96,6 +105,9 @@ import { Table } from '../../core/models/table.model'
       font-weight: 600;
       margin-bottom: 4px;
     }
+    .continue-btn {
+      margin-top: 24px;
+    }
     .table-card p {
       color: var(--text-muted);
       font-size: 13px;
@@ -106,11 +118,14 @@ export class TableSelectComponent implements OnInit {
   private readonly route = inject(ActivatedRoute)
   private readonly restaurantService = inject(RestaurantService)
   private readonly tableService = inject(TableService)
+  private readonly cartStore = inject(CartStore)
+  private readonly router = inject(Router)
 
   readonly restaurant = signal<Restaurant | null>(null)
   readonly tables = signal<Table[]>([])
   readonly selected = signal<Table | null>(null)
   readonly loading = signal(false)
+  readonly occupying = signal(false)
   readonly searched = signal(false)
   readonly searchedPeople = signal(0)
   readonly error = signal<string | null>(null)
@@ -126,15 +141,15 @@ export class TableSelectComponent implements OnInit {
     })
   }
 
-  search(): void {
-    const people = Number(this.people)
+  search(keepError = false): void {
+    const people = Number(this.searchedPeople() && keepError ? this.searchedPeople() : this.people)
     if (!Number.isInteger(people) || people < 1) {
       this.error.set('El número de personas debe ser un entero mayor que 0')
       return
     }
 
     this.loading.set(true)
-    this.error.set(null)
+    if (!keepError) this.error.set(null)
     this.selected.set(null)
 
     this.tableService.getAvailable(this.restaurantId, people).subscribe({
@@ -153,5 +168,29 @@ export class TableSelectComponent implements OnInit {
 
   select(table: Table): void {
     this.selected.set(table)
+  }
+
+  continue(): void {
+    const table = this.selected()
+    if (!table) return
+
+    this.occupying.set(true)
+    this.error.set(null)
+
+    this.tableService.occupy(this.restaurantId, table.id).subscribe({
+      next: (occupied) => {
+        this.cartStore.setTable(occupied)
+        this.router.navigate(['/restaurants', this.restaurantId])
+      },
+      error: (err) => {
+        this.occupying.set(false)
+        if (err.status === 409) {
+          this.error.set(`${err.error?.message ?? err.error?.error ?? 'La mesa ya no está disponible'}. Elige otra mesa.`)
+          this.search(true)
+          return
+        }
+        this.error.set(err.error?.message ?? err.error?.error ?? 'Error al ocupar la mesa')
+      }
+    })
   }
 }
