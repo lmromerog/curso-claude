@@ -204,3 +204,9 @@ export class TableInUseError extends AppError {
     super('No se puede eliminar una mesa ocupada')
   }
 }
+
+export class TableNotOccupiedError extends AppError {
+  constructor() {
+    super('La mesa no está ocupada')
+  }
+}
